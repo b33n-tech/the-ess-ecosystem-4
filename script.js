@@ -48,22 +48,31 @@ function createCard(call, source) {
 
   const wishlistBtn = document.createElement('button');
   wishlistBtn.className='wishlist-btn';
-  wishlistBtn.textContent = wishlist.some(item=>item.id===source.name+'::'+call.title) ? '⭐ Retirer' : '⭐ Ajouter';
-  wishlistBtn.addEventListener('click', () => toggleWishlist(call, source.name));
+  wishlistBtn.textContent = wishlist.some(item => item.id === source.name+'::'+call.title) ? '⭐ Retirer' : '⭐ Ajouter';
+
+  wishlistBtn.addEventListener('click', () => {
+    toggleWishlist(call, source.name, wishlistBtn);
+  });
   card.appendChild(wishlistBtn);
 
   return card;
 }
 
-// Ajouter/retirer de la wishlist
-function toggleWishlist(call, sourceName){
+// Ajouter/retirer de la wishlist et mettre à jour le bouton + encart
+function toggleWishlist(call, sourceName, button){
   const id = sourceName+'::'+call.title;
   const index = wishlist.findIndex(item=>item.id===id);
-  if(index===-1) wishlist.push({...call, source:sourceName, id});
-  else wishlist.splice(index,1);
+
+  if(index === -1){
+    wishlist.push({...call, source:sourceName, id});
+    button.textContent = '⭐ Retirer';
+  } else {
+    wishlist.splice(index,1);
+    button.textContent = '⭐ Ajouter';
+  }
+
   localStorage.setItem('wishlist', JSON.stringify(wishlist));
   renderWishlist();
-  displayCardsFromJSON(); // met à jour les boutons des cartes
 }
 
 // Met à jour la wishlist affichée dans l'encart
@@ -74,13 +83,6 @@ function renderWishlist(){
     const li = document.createElement('li');
     li.textContent = `${item.title} (${item.source})`;
     list.appendChild(li);
-  });
-}
-
-// Met à jour les boutons des cartes après ajout/retrait
-function displayCardsFromJSON(){
-  fetch('data.json').then(res=>res.json()).then(data=>{
-    displayCards(data.sources);
   });
 }
 
