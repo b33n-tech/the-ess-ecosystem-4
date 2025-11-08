@@ -1,5 +1,6 @@
 let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
 
+// Charge le JSON et génère les cartes
 async function loadData() {
   try {
     const response = await fetch('data.json');
@@ -10,6 +11,7 @@ async function loadData() {
   }
 }
 
+// Génère toutes les cartes
 function displayCards(sources) {
   const container = document.getElementById('cards');
   container.innerHTML = '';
@@ -24,6 +26,7 @@ function displayCards(sources) {
   renderWishlistButtonStates();
 }
 
+// Crée une carte individuelle
 function createCard(call, source) {
   const card = document.createElement('div');
   card.className = 'card';
@@ -35,51 +38,61 @@ function createCard(call, source) {
   const link = document.createElement('a'); link.href = call.url; link.target='_blank'; link.textContent='Voir le projet'; card.appendChild(link);
 
   const tagContainer = document.createElement('div');
-  source.tags.concat(call.tags||[]).forEach(tag=>{
+  (source.tags.concat(call.tags || [])).forEach(tag => {
     const span = document.createElement('span'); span.className='tag'; span.textContent=tag; tagContainer.appendChild(span);
   });
   card.appendChild(tagContainer);
 
   const wishlistBtn = document.createElement('button');
   wishlistBtn.className='wishlist-btn';
-  wishlistBtn.dataset.id = source.name+'::'+call.title;
-  wishlistBtn.addEventListener('click', ()=>toggleWishlist(call, source.name));
+  wishlistBtn.dataset.id = source.name + '::' + call.title;
+  wishlistBtn.addEventListener('click', () => toggleWishlist(call, source.name));
   card.appendChild(wishlistBtn);
 
   return card;
 }
 
+// Ajoute ou retire un appel de la wishlist
 function toggleWishlist(call, sourceName){
   const id = sourceName+'::'+call.title;
-  const index = wishlist.findIndex(item=>item.id===id);
-  if(index===-1) wishlist.push({...call, source:sourceName, id});
-  else wishlist.splice(index,1);
+  const index = wishlist.findIndex(item => item.id === id);
+  if(index === -1) {
+    wishlist.push({...call, source: sourceName, id});
+  } else {
+    wishlist.splice(index,1);
+  }
   localStorage.setItem('wishlist', JSON.stringify(wishlist));
   renderWishlistButtonStates();
 }
 
+// Met à jour l'état visuel des boutons
 function renderWishlistButtonStates(){
   document.querySelectorAll('.wishlist-btn').forEach(btn=>{
-    const id=btn.dataset.id;
-    btn.textContent = wishlist.some(item=>item.id===id) ? '⭐ Retirer' : '⭐ Ajouter';
+    const id = btn.dataset.id;
+    btn.textContent = wishlist.some(item => item.id === id) ? '⭐ Retirer' : '⭐ Ajouter';
   });
 }
 
+// Télécharge uniquement la wishlist sélectionnée en PDF
 function downloadWishlistPDF(){
   if(wishlist.length===0) return alert("Ta sélection est vide !");
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF(); let y=10;
-  wishlist.forEach((item,idx)=>{
-    doc.setFontSize(12); doc.text(`${idx+1}. ${item.title}`,10,y); y+=6;
-    doc.setFontSize(10); doc.text(`Structure : ${item.source}`,10,y); y+=5;
-    doc.text(`Date limite : ${item.deadline}`,10,y); y+=5;
-    doc.text(`Tags : ${(item.tags||[]).join(', ')}`,10,y); y+=5;
-    doc.text(`Note : ${item.note}`,10,y); y+=10;
-    if(y>270){doc.addPage(); y=10;}
+  const doc = new jsPDF();
+  let y = 10;
+
+  wishlist.forEach((item, idx) => {
+    doc.setFontSize(12); doc.text(`${idx+1}. ${item.title}`, 10, y); y+=6;
+    doc.setFontSize(10); doc.text(`Structure : ${item.source}`, 10, y); y+=5;
+    doc.text(`Date limite : ${item.deadline}`, 10, y); y+=5;
+    doc.text(`Tags : ${(item.tags||[]).join(', ')}`, 10, y); y+=5;
+    doc.text(`Note : ${item.note}`, 10, y); y+=10;
+    if(y>270){ doc.addPage(); y=10; }
   });
+
   doc.save('wishlist.pdf');
 }
 
+// Bouton PDF
 document.getElementById('download-wishlist').addEventListener('click', downloadWishlistPDF);
 
 loadData();
